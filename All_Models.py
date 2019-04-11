@@ -4,13 +4,15 @@ import gensim
 from Constants import Constants
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence
-
+from SubModels import Encoder
+import numpy as np
 
 # Load Google's pre-trained Word2Vec model.
 # model = gensim.models.KeyedVectors.load_word2vec_format(
 #     './GoogleNews-vectors-negative300.bin', binary=True)
 
 # word2vector = torch.FloatTensor(model.vectors)
+
 
 class SSCL(nn.Module):
 
@@ -20,24 +22,25 @@ class SSCL(nn.Module):
         super(SSCL, self).__init__()
 
         self.embed = nn.Embedding(
-            args.vocab_size, args.embedding_dim, Constants.PAD)
+            args.vocab_size, args.SSCL_embedingDim , Constants.PAD)
 
         self.cnn = nn.Sequential(
-            nn.Conv1d(args.embedding_dim, args.num_CNN_filter,
-                      args.CNN_kernel_size, 1, 2),
-            nn.BatchNorm1d(args.num_CNN_filter),
+            nn.Conv1d(args.SSCL_embedingDim , args.SSCL_CNNDim,
+                      args.SSCL_CNNKernel, 1, 2),
+            nn.BatchNorm1d(args.SSCL_CNNDim),
             nn.LeakyReLU(inplace=True),
+            nn.Dropout(args.SSCL_CNNDropout),
         )
 
-        self.rnn = nn.LSTM(args.num_CNN_filter, args.RNN_hidden,
-                           batch_first=True, dropout=args.LSTM_dropout, num_layers=args.num_LSTM_layers)
+        self.rnn = nn.LSTM(args.SSCL_CNNDim, args.SSCL_RNNHidden,
+                           batch_first=True, dropout=args.SSCL_LSTMDropout, num_layers=args.SSCL_LSTMLayers)
 
         self.out_net = nn.Sequential(
-            nn.Linear(args.RNN_hidden, 1),
+            nn.Linear(args.SSCL_RNNHidden, 1),
         )
 
-        self.h0 = nn.Parameter(torch.randn(1, args.RNN_hidden))
-        self.c0 = nn.Parameter(torch.randn(1, args.RNN_hidden))
+        self.h0 = nn.Parameter(torch.randn(1, args.SSCL_RNNHidden))
+        self.c0 = nn.Parameter(torch.randn(1, args.SSCL_RNNHidden))
 
 #         self.apply(self.weight_init)
 
@@ -55,7 +58,7 @@ class SSCL(nn.Module):
                 out, (self.h0.repeat(1, B, 1), self.c0.repeat(1, B, 1)))
             out = pad_packed_sequence(out, batch_first=True)[0][:, -1, :]
         else:
-            #             out = self.rnn(out,(self.h0.repeat(1,B,1), self.c0.repeat(1,B,1)))[0][:, -1, :]
+            # out = self.rnn(out,(self.h0.repeat(1,B,1), self.c0.repeat(1,B,1)))[0][:, -1, :]
             # out = self.rnn(out)[0][:, -1, :]
             out = self.rnn(out)[0].sum(dim=1)
 
@@ -75,7 +78,6 @@ class SSCL(nn.Module):
                     value.data.normal_()
 
 
-
 class GatedCNN(nn.Module):
 
     def __init__(self, args):
@@ -83,27 +85,44 @@ class GatedCNN(nn.Module):
 
         self.emb = nn.Embedding(args.vocab_size, args.GatedCNN_embedingDim)
 
-        self.conv = nn.ModuleList([nn.Conv1d(args.GatedCNN_embedingDim, args.GatedCNN_convDim, args.GatedCNN_kernel, args.GatedCNN_stride, args.GatedCNN_pad)])
-        self.conv.extend([nn.Conv1d(args.GatedCNN_convDim, args.GatedCNN_convDim, args.GatedCNN_kernel, args.GatedCNN_stride, args.GatedCNN_pad ) for _ in range(args.GatedCNN_layers)])
-        self.conv_gate = nn.ModuleList([nn.Conv1d(args.GatedCNN_embedingDim, args.GatedCNN_convDim, args.GatedCNN_kernel, args.GatedCNN_stride, args.GatedCNN_pad )])        
-        self.conv_gate.extend([nn.Conv1d(args.GatedCNN_convDim, args.GatedCNN_convDim, args.GatedCNN_kernel, args.GatedCNN_stride, args.GatedCNN_pad ) for _ in range(args.GatedCNN_layers)])
+        self.conv = nn.ModuleList([nn.Conv1d(args.GatedCNN_embedingDim, args.GatedCNN_convDim,
+                                             args.GatedCNN_kernel, args.GatedCNN_stride, args.GatedCNN_pad)])
+        self.conv.extend([
+            nn.Sequential(
+                nn.Conv1d(args.GatedCNN_convDim, args.GatedCNN_convDim, args.GatedCNN_kernel,
+                          args.GatedCNN_stride, args.GatedCNN_pad),
+                nn.BatchNorm1d(args.GatedCNN_convDim),
+                nn.LeakyReLU(0.2, inplace=True),
+                nn.Dropout(args.GatedCNN_dropout)
+            )
+            for _ in range(args.GatedCNN_layers)])
+        self.conv_gate = nn.ModuleList([nn.Conv1d(
+            args.GatedCNN_embedingDim, args.GatedCNN_convDim, args.GatedCNN_kernel, args.GatedCNN_stride, args.GatedCNN_pad)])
+        self.conv_gate.extend([
+            nn.Sequential(
+                nn.Conv1d(args.GatedCNN_convDim, args.GatedCNN_convDim, args.GatedCNN_kernel,
+                          args.GatedCNN_stride, args.GatedCNN_pad),
+                nn.BatchNorm1d(args.GatedCNN_convDim),
+                nn.LeakyReLU(0.2, inplace=True),
+                nn.Dropout(args.GatedCNN_dropout),
+            )
+            for _ in range(args.GatedCNN_layers)])
 
         self.fc = nn.Sequential(
             nn.Linear(args.GatedCNN_convDim, 1),
-        ) 
-        
+        )
 
-    def forward(self, input, lengths = None):
+    def forward(self, input, lengths=None):
 
         out_ = self.emb(input).transpose(1, 2)
 
-        for i,(conv, conv_gate) in enumerate(zip(self.conv, self.conv_gate)):
-            out_temp = out_ # Prepare for Residule
+        for i, (conv, conv_gate) in enumerate(zip(self.conv, self.conv_gate)):
+            out_temp = out_  # Prepare for Residule
             out_a = conv(out_)
             out_b = conv_gate(out_)
             out_ = out_a * F.sigmoid(out_b)
-            if out_temp.size()[1] ==  out_.size()[1]:
-                out_ += out_temp # Residule
+            if out_temp.size()[1] == out_.size()[1]:
+                out_ += out_temp  # Residule
 
         out_ = out_.sum(dim=-1)
 
@@ -124,3 +143,36 @@ class GatedCNN(nn.Module):
 
 
 
+class SelfAttnModel(nn.Module):
+    '''
+    Input: A sequence 
+    Output: A Single unit output
+    '''
+
+    def __init__(self, args):
+        super().__init__()
+
+        self.encoder = Encoder(
+            n_src_vocab=args.vocab_size, len_max_seq=args.attnLenMaxSeq,
+            d_word_vec=args.attnWordVecDim, d_model=args.attnModelDim, d_inner=args.attnFFInnerDim,
+            n_layers=args.attnNumLayers, n_head=args.attnNumHead, d_k=args.attnKDim, d_v=args.attnVDim,
+            dropout=args.attnDropout)
+
+        self.fc = nn.Linear(args.attnModelDim, 1)
+
+        assert args.attnModelDim == args.attnWordVecDim, \
+            'To facilitate the residual connections, \
+         the dimensions of all module outputs shall be the same.'
+
+    def forward(self, input, lengths=None):
+
+        enc_output, *_ = self.encoder(input)
+        out_ = self.fc(enc_output)
+
+        return out_.sum(dim=1)
+
+
+
+
+
+    

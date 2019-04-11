@@ -15,13 +15,13 @@ class Trainer(nn.Module):
 
         self.model = model(args)
         self.optim = optim.Adam(
-            self.model.parameters(), lr=args.lr, weight_decay=args.adam_weight_decay)
+            self.model.parameters(), lr=args.lr, weight_decay=args.L2)
 
         if args.usingWeightRandomSampling:
             pos_weight = None
         else:
             pos_weight = torch.tensor(
-                args.numberOfNoSpammer/args.numberOfSpammer)
+                args.numberOfNonSpammer/args.numberOfSpammer)
 
         self.threshold = args.threshold
         self.log_path = args.log_path

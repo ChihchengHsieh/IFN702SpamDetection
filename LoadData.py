@@ -11,38 +11,42 @@ import nltk
 
 def loadingData(args):
 
-    if not os.path.isfile(args.pickle_name):
+    if not os.path.isfile(os.path.join(args.dataset, args.pickle_name)):
 
-        if not os.path.isfile(args.pickle_name_beforeMapToIdx):
+        if not os.path.isfile(os.path.join(args.dataset, args.pickle_name_beforeMapToIdx)):
 
             print("Loading Origin Data and do the Proprocessing")
 
-            if args.full_data:
-                df = pd.read_html('FullDataFromSQLHSpam14.html')[0].iloc[1:, :]
+            if args.dataset == "HSpam14":
+                print("Loading HSpam14 dataset")
+                df = pd.read_html(os.path.join(args.dataset, "FullDataFromSQLHSpam14.html"))[
+                    0].iloc[1:, :]
+                df.columns = ['text', 'maliciousMark']
+            elif args.dataset == "Honeypot":
+                df_Nonspammer = pd.read_csv(
+                    "./Honeypot/nonspam_tweets.csv", encoding="ISO-8859-1")[['text', 'maliciousMark']]
+                df_Spammer = pd.read_csv(
+                    "./Honeypot/spam_tweets.csv", encoding="ISO-8859-1")[['text', 'maliciousMark']]
+                df = pd.concat([df_Nonspammer, df_Spammer])
+                del df_Nonspammer, df_Spammer
+                print("Loading Honeypot dataset")
             else:
-                df_noSPammer = pd.read_html(
-                    'textMaliciousMark_10th_NotSpammer.html')
-                df_noSPammer = df_noSPammer[0][1:]
-                df_Spammer = pd.read_html(
-                    'textMaliciousMark_10th_Spammer.html')
-                df_Spammer = df_Spammer[0][1:]
-                df = pd.concat([df_Spammer, df_noSPammer])
-                del df_noSPammer, df_Spammer
+                print("Please input a valid dataset name: HSpam14, Honeypot")
+                raise ValueError
 
             print("Data Splitation")
 
             X_train, X_test, Y_train, Y_test = train_test_split(
-                df[0], df[1], test_size=args.validation_portion, stratify=df[1], random_state=64)
-            X_validation, X_test, Y_validation, Y_test  = train_test_split(
+                df['text'], df['maliciousMark'], test_size=args.validation_portion, stratify=df['maliciousMark'], random_state=64)
+            X_validation, X_test, Y_validation, Y_test = train_test_split(
                 X_test, Y_test, test_size=args.test_portion, stratify=Y_test, random_state=64)
 
-            print("Number of Training Data: ", X_train)
-            print("Number of Validation Data: ", X_validation)
-            print("Number of Test Data: ", X_test)
+            print("Number of Training Data: ", len(X_train))
+            print("Number of Validation Data: ", len(X_validation))
+            print("Number of Test Data: ", len(X_test))
 
             print("Preprocessing X_train")
 
-            # if I change the vocab size, I will not change this one..
             X_train = preprocessingInputData(X_train)
 
             print("Preprocessing X_validation")
@@ -58,14 +62,17 @@ def loadingData(args):
             # Preparing the dictionary
             text = nltk.Text(list(itertools.chain(*X_train)))
 
-            with open(args.pickle_name_beforeMapToIdx, "wb") as fp:  # Pickling
+            print("Original Vocab Size: ", len(text.tokens))
+
+            with open(os.path.join(args.dataset, args.pickle_name_beforeMapToIdx), "wb") as fp:  # Pickling
                 pickle.dump([X_train, X_validation, X_test,
                              Y_train, Y_validation, Y_test,  text], fp)
-                print("The Pickle Data beforeMapToIdx Dumped")
+                print("The Pickle Data beforeMapToIdx Dumped to:", os.path.join(
+                    args.dataset, args.pickle_name_beforeMapToIdx))
         else:
             print("Loading Existing BeforeMapToIdx file: ",
-                  args.pickle_name_beforeMapToIdx)
-            with open(args.pickle_name_beforeMapToIdx, "rb") as fp:   # Unpickling
+                  os.path.join(args.dataset, args.pickle_name_beforeMapToIdx))
+            with open(os.path.join(args.dataset, args.pickle_name_beforeMapToIdx), "rb") as fp:   # Unpickling
                 [X_train, X_validation, X_test, Y_train,
                     Y_validation, Y_test, text] = pickle.load(fp)
 
@@ -98,14 +105,14 @@ def loadingData(args):
 
         print("Dumping Data")
 
-        with open(args.pickle_name, "wb") as fp:   # Pickling
+        with open(os.path.join(args.dataset, args.pickle_name), "wb") as fp:   # Pickling
             pickle.dump([training_dataset, validation_dataset,
                          test_dataset, text], fp)
             print("The Pickle Data Dumped")
 
     else:
         print("Loading Existing File: ", args.pickle_name)
-        with open(args.pickle_name, "rb") as fp:   # Unpickling
+        with open(os.path.join(args.dataset, args.pickle_name), "rb") as fp:   # Unpickling
             training_dataset, validation_dataset, test_dataset, text = pickle.load(
                 fp)
             args.vocab_size = len(text.tokens)
