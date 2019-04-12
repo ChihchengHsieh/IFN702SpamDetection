@@ -120,7 +120,7 @@ class GatedCNN(nn.Module):
             out_temp = out_  # Prepare for Residule
             out_a = conv(out_)
             out_b = conv_gate(out_)
-            out_ = out_a * F.sigmoid(out_b)
+            out_ = out_a * torch.sigmoid(out_b)
             if out_temp.size()[1] == out_.size()[1]:
                 out_ += out_temp  # Residule
 
