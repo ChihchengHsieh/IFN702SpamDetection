@@ -1,3 +1,5 @@
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import torch
 import torch.nn as nn
 from sklearn.metrics import confusion_matrix
@@ -6,6 +8,9 @@ from torch.nn.utils import clip_grad_norm
 import torch.optim as optim
 import matplotlib.pyplot as plt
 from copy import deepcopy
+
+import matplotlib
+matplotlib.use("TkAgg")
 
 
 class Trainer(nn.Module):
@@ -103,6 +108,7 @@ class Trainer(nn.Module):
                 self.hist[name] = []
 
     def plot_train_hist(self, step):
+
         fig = plt.figure(figsize=(20, 10))
         num_loss = 2
         i = 0
@@ -117,6 +123,7 @@ class Trainer(nn.Module):
                 plt.legend(loc='upper left')
         plt.tight_layout()
         plt.show()
+
         fig.savefig(self.log_path+"Train_Loss&Acc_Hist_"+str(step)+".png")
 
     def plot_all(self, step=None):
@@ -140,6 +147,7 @@ class Trainer(nn.Module):
                     plt.legend(loc='upper left')
         plt.tight_layout()
         plt.show()
+
         if step is not None:
             fig.savefig(self.log_path + "All_Hist_"+str(step)+".png")
 
@@ -161,26 +169,7 @@ class Trainer(nn.Module):
         return sum([param.nelement() for param in self.parameters()])
 
 
-
-
-
-
-
-
-
-
-
-
-
 ###########################################################################################
-
-
-
-
-
-
-
-
 
 
 class TkTrainer(nn.Module):
@@ -281,7 +270,8 @@ class TkTrainer(nn.Module):
                 self.hist[name] = []
 
     def plot_train_hist(self, step):
-        fig = plt.figure(figsize=(20, 10))
+
+        fig = plt.figure(figsize=(8, 6))
         num_loss = 2
         i = 0
         for name in self.hist.keys():
@@ -289,44 +279,48 @@ class TkTrainer(nn.Module):
                 i += 1
                 fig.add_subplot(num_loss, 1, i)
                 plt.plot(self.hist[name], label=name)
-                plt.xlabel('Number of Steps', fontsize=15)
-                plt.ylabel(name, fontsize=15)
-                plt.title(name, fontsize=30, fontweight="bold")
+                plt.xlabel('Number of Steps', fontsize=8)
+                plt.ylabel(name, fontsize=8)
+                plt.title(name, fontsize=8, fontweight="bold")
                 plt.legend(loc='upper left')
         plt.tight_layout()
-        plt.show()
         fig.savefig(self.log_path+"Train_Loss&Acc_Hist_"+str(step)+".png")
+
+        return fig
 
     def plot_all(self, step=None):
 
-        fig = plt.figure(figsize=(20, 10))
+        fig = plt.figure(figsize=(8, 6))
         for name in self.hist.keys():
             if "Average" in name:
                 if 'Loss' in name:
                     plt.subplot(211)
                     plt.plot(self.hist[name], marker='o', label=name)
-                    plt.ylabel('Loss', fontsize=15)
-                    plt.xlabel('Number of epochs', fontsize=15)
-                    plt.title('Loss', fontsize=20, fontweight="bold")
+                    plt.ylabel('Loss', fontsize=8)
+                    plt.xlabel('Number of epochs', fontsize=8)
+                    plt.title('Loss', fontsize=8, fontweight="bold")
                     plt.legend(loc='upper left')
                 if "Accuracy" in name:
                     plt.subplot(212)
                     plt.plot(self.hist[name], marker='o', label=name)
-                    plt.ylabel('Accuracy', fontsize=15)
-                    plt.xlabel('Number of epochs', fontsize=15)
-                    plt.title('Accuracy', fontsize=20, fontweight="bold")
+                    plt.ylabel('Accuracy', fontsize=8)
+                    plt.xlabel('Number of epochs', fontsize=8)
+                    plt.title('Accuracy', fontsize=8, fontweight="bold")
                     plt.legend(loc='upper left')
         plt.tight_layout()
-        plt.show()
+
         if step is not None:
             fig.savefig(self.log_path + "All_Hist_"+str(step)+".png")
+
+        return fig
 
     def model_save(self, step):
 
         path = self.model_path + self.model_name+'_Step_' + str(step) + '.pth'
         torch.save({self.model_name: self.state_dict()}, path)
         self.textbox.insert("end", 'Model Saved\n')
-        window.update_idletasks()
+        self.window.update_idletasks()
+
     def load_step_dict(self, step):
 
         path = self.model_path + self.model_name + \
@@ -334,7 +328,7 @@ class TkTrainer(nn.Module):
         self.load_state_dict(torch.load(
             path, map_location=lambda storage, loc: storage)[self.model_name])
         self.textbox.insert("end", 'Model Loaded\n')
-        window.update_idletasks()
+        self.window.update_idletasks()
 
     def num_all_params(self,):
         return sum([param.nelement() for param in self.parameters()])
