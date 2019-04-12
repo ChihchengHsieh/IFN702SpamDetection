@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[5]:
 
 
 import torch
@@ -674,7 +674,9 @@ def StartTraining():
     test_text, test_X, test_X_len, test_y = test_text[0], test_X[0].to(device), test_X_len[0].to(device), test_y[0].to(device)
     test_loss, test_accuracy, test_cm = trainer.test_step(test_X, test_y)
 
-    resultTextbox.insert("end",("\n\nThe Test Loss: " + str(test_loss.item()) + "\n" ))
+    
+    resultTextbox.insert("end",("\n\n=========================================================================================" ))
+    resultTextbox.insert("end",("\nThe Test Loss: " + str(test_loss.item()) + "\n" ))
     resultTextbox.insert("end",("The Test Accuracy: " + str(test_accuracy.item()) + "\n" ))
     resultTextbox.insert("end",("Test Confusion Matrix: \n"))
     resultTextbox.insert("end",(pd.DataFrame(test_cm)))
@@ -691,24 +693,6 @@ StartButton.place(x=1000, y=500, anchor="nw")
 
 
 window.mainloop()
-
-
-# In[2]:
-
-
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-
-
-# In[ ]:
-
-
-
-
-
-# In[3]:
-
-
-args.vocab_size
 
 
 # In[ ]:
