@@ -23,13 +23,13 @@ def loadingData(args):
                     0].iloc[1:, :]
                 df.columns = ['text', 'maliciousMark']
             elif args.dataset == "Honeypot":
+                print("Loading Honeypot dataset")
                 df_Nonspammer = pd.read_csv(
                     "./Honeypot/nonspam_tweets.csv", encoding="ISO-8859-1")[['text', 'maliciousMark']]
                 df_Spammer = pd.read_csv(
                     "./Honeypot/spam_tweets.csv", encoding="ISO-8859-1")[['text', 'maliciousMark']]
                 df = pd.concat([df_Nonspammer, df_Spammer])
                 del df_Nonspammer, df_Spammer
-                print("Loading Honeypot dataset")
             else:
                 print("Please input a valid dataset name: HSpam14, Honeypot")
                 raise ValueError
@@ -120,29 +120,6 @@ def loadingData(args):
     return training_dataset, validation_dataset, test_dataset, text
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ####################################################################################
 
 
@@ -152,7 +129,8 @@ def TkloadingData(args, resultTextbox, window):
 
         if not os.path.isfile(os.path.join(args.dataset, args.pickle_name_beforeMapToIdx)):
 
-            resultTextbox.insert("end", ("Loading Origin Data and do the Proprocessing\n"))
+            resultTextbox.insert(
+                "end", ("Loading Origin Data and do the Proprocessing\n"))
             window.update_idletasks()
 
             if args.dataset == "HSpam14":
@@ -169,20 +147,24 @@ def TkloadingData(args, resultTextbox, window):
                 del df_Nonspammer, df_Spammer
                 resultTextbox.insert("end", ("Loading Honeypot dataset\n"))
             else:
-                resultTextbox.insert("end", ("Please input a valid dataset name: HSpam14, Honeypot\n"))
+                resultTextbox.insert(
+                    "end", ("Please input a valid dataset name: HSpam14, Honeypot\n"))
                 raise ValueError
 
             window.update_idletasks()
             resultTextbox.insert("end", ("Data Splitation\n"))
-            window.update_idletasks()       
+            window.update_idletasks()
             X_train, X_test, Y_train, Y_test = train_test_split(
                 df['text'], df['maliciousMark'], test_size=args.validation_portion, stratify=df['maliciousMark'], random_state=64)
             X_validation, X_test, Y_validation, Y_test = train_test_split(
                 X_test, Y_test, test_size=args.test_portion, stratify=Y_test, random_state=64)
 
-            resultTextbox.insert("end", ("Number of Training Data: " + str(len(X_train)) + "\n" ))
-            resultTextbox.insert("end", ("Number of Validation Data: "+ str(len(X_validation)) + "\n"))
-            resultTextbox.insert("end", ("Number of Test Data: " + str(len(X_test)) + "\n" ))
+            resultTextbox.insert(
+                "end", ("Number of Training Data: " + str(len(X_train)) + "\n"))
+            resultTextbox.insert(
+                "end", ("Number of Validation Data: " + str(len(X_validation)) + "\n"))
+            resultTextbox.insert(
+                "end", ("Number of Test Data: " + str(len(X_test)) + "\n"))
             window.update_idletasks()
 
             resultTextbox.insert("end", ("Preprocessing X_train\n"))
@@ -206,7 +188,8 @@ def TkloadingData(args, resultTextbox, window):
             # Preparing the dictionary
             text = nltk.Text(list(itertools.chain(*X_train)))
 
-            resultTextbox.insert("end", ("Original Vocab Size: " + str(len(text.tokens)) + "\n" ))
+            resultTextbox.insert(
+                "end", ("Original Vocab Size: " + str(len(text.tokens)) + "\n"))
             window.update_idletasks()
 
             with open(os.path.join(args.dataset, args.pickle_name_beforeMapToIdx), "wb") as fp:  # Pickling
@@ -215,10 +198,11 @@ def TkloadingData(args, resultTextbox, window):
                 resultTextbox.insert("end", ("The Pickle Data beforeMapToIdx Dumped to:" + str(os.path.join(
                     args.dataset, args.pickle_name_beforeMapToIdx)) + "\n"))
                 window.update_idletasks()
-                
+
         else:
-            resultTextbox.insert("end", ("Loading Existing BeforeMapToIdx file: " + str(os.path.join(args.dataset, args.pickle_name_beforeMapToIdx)) + "\n"))
-            window.update_idletasks()            
+            resultTextbox.insert("end", ("Loading Existing BeforeMapToIdx file: " + str(
+                os.path.join(args.dataset, args.pickle_name_beforeMapToIdx)) + "\n"))
+            window.update_idletasks()
             with open(os.path.join(args.dataset, args.pickle_name_beforeMapToIdx), "rb") as fp:   # Unpickling
                 [X_train, X_validation, X_test, Y_train,
                     Y_validation, Y_test, text] = pickle.load(fp)
@@ -241,29 +225,30 @@ def TkloadingData(args, resultTextbox, window):
         training_dataset = CreateDatatset(
             X_train, mapFromWordToIdx(X_train, text), list(map(int, list(Y_train))))
 
-        resultTextbox.insert("end",("Validation set map to Idx\n"))
+        resultTextbox.insert("end", ("Validation set map to Idx\n"))
         window.update_idletasks()
 
         validation_dataset = CreateDatatset(
             X_validation, mapFromWordToIdx(X_validation, text), list(map(int, list(Y_validation))))
 
-        resultTextbox.insert("end",("Test set map to Idx\n"))
+        resultTextbox.insert("end", ("Test set map to Idx\n"))
         window.update_idletasks()
 
         test_dataset = CreateDatatset(
             X_test, mapFromWordToIdx(X_test, text), list(map(int, list(Y_test))))
 
-        resultTextbox.insert("end",("Dumping Data\n"))
+        resultTextbox.insert("end", ("Dumping Data\n"))
         window.update_idletasks()
 
         with open(os.path.join(args.dataset, args.pickle_name), "wb") as fp:   # Pickling
             pickle.dump([training_dataset, validation_dataset,
                          test_dataset, text], fp)
-            resultTextbox.insert("end",("The Pickle Data Dumped\n"))
+            resultTextbox.insert("end", ("The Pickle Data Dumped\n"))
             window.update_idletasks()
 
     else:
-        resultTextbox.insert("end",("Loading Existing File: " + args.pickle_name + "\n"))
+        resultTextbox.insert(
+            "end", ("Loading Existing File: " + args.pickle_name + "\n"))
         window.update_idletasks()
         with open(os.path.join(args.dataset, args.pickle_name), "rb") as fp:   # Unpickling
             training_dataset, validation_dataset, test_dataset, text = pickle.load(
@@ -271,6 +256,3 @@ def TkloadingData(args, resultTextbox, window):
             args.vocab_size = len(text.tokens)
 
     return training_dataset, validation_dataset, test_dataset, text
-
-
-

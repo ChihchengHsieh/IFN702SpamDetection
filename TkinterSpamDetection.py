@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[5]:
+# In[20]:
 
 
 import torch
@@ -36,6 +36,7 @@ get_ipython().run_line_magic('matplotlib', 'inline')
 3. Sigmoid warining
 6. add Random Seed
 7. Add test program
+8. test the loading dataset
 '''
 
 
@@ -128,13 +129,27 @@ def setBoolHyerParams(window, var, text, x, y):
 
 def setHyperPrams(window, text, x, y):
     l = tk.Label(window,
-                 text=text,    # 标签的文字
-                 font=('Arial', 12),     # 字体和字体大小 # 标签长宽
+                 text=text,    
+                 font=('Arial', 12),    
                  )
     l.place(x=x, y=y, anchor='nw')
     e = tk.Entry(window)
     e.place(x=(x+200), y=y, anchor="nw")
     return l, e
+
+
+
+def setModelHyperPrams(window, text, x, y):
+    
+    l = tk.Label(window,
+             text=text,    
+             font=('Arial', 12),    
+             )
+    l.place(x=x, y=y, anchor='nw')
+    e = tk.Entry(window)
+    e.place(x=x, y=(y+30), anchor="nw")
+    return l, e
+
 
 
 def setRadioButtons(var, label, texts, values, command, x, y):
@@ -184,52 +199,52 @@ x = 250
 y = 10
 
 
-GatedCNN_embedingDim_label, GatedCNN_embedingDim = setHyperPrams(
+GatedCNN_embedingDim_label, GatedCNN_embedingDim = setModelHyperPrams(
     window, "GatedCNN_embedingDim", x, y)
-GatedCNN_convDim_label, GatedCNN_convDim = setHyperPrams(
-    window, "GatedCNN_convDim", x, y+(30*1))
-GatedCNN_kernel_label, GatedCNN_kernel = setHyperPrams(
-    window, "GatedCNN_kernel", x, y+(30*2))
-GatedCNN_stride_label, GatedCNN_stride = setHyperPrams(
-    window, "GatedCNN_stride", x, y+(30*3))
-GatedCNN_pad_label, GatedCNN_pad = setHyperPrams(
-    window, "GatedCNN_pad", x, y+(30*4))
-GatedCNN_layers_label, GatedCNN_layers = setHyperPrams(
-    window, "GatedCNN_layers", x, y+(30*5))
-GatedCNN_dropout_label, GatedCNN_dropout = setHyperPrams(
-    window, "GatedCNN_dropout", x, y+(30*6))
+GatedCNN_convDim_label, GatedCNN_convDim = setModelHyperPrams(
+    window, "GatedCNN_convDim", x, y+(60*1))
+GatedCNN_kernel_label, GatedCNN_kernel = setModelHyperPrams(
+    window, "GatedCNN_kernel", x, y+(60*2))
+GatedCNN_stride_label, GatedCNN_stride = setModelHyperPrams(
+    window, "GatedCNN_stride", x, y+(60*3))
+GatedCNN_pad_label, GatedCNN_pad = setModelHyperPrams(
+    window, "GatedCNN_pad", x, y+(60*4))
+GatedCNN_layers_label, GatedCNN_layers = setModelHyperPrams(
+    window, "GatedCNN_layers", x, y+(60*5))
+GatedCNN_dropout_label, GatedCNN_dropout = setModelHyperPrams(
+    window, "GatedCNN_dropout", x, y+(60*6))
 
-SSCL_RNNHidden_label, SSCL_RNNHidden = setHyperPrams(
+SSCL_RNNHidden_label, SSCL_RNNHidden = setModelHyperPrams(
     window, "SSCL_RNNHidden", x, y)
-SSCL_CNNDim_label, SSCL_CNNDim = setHyperPrams(
-    window, "SSCL_CNNDim", x, y+(30*1))
-SSCL_CNNKernel_label, SSCL_CNNKernel = setHyperPrams(
-    window, "SSCL_CNNKernel", x, y+(30*2))
-SSCL_CNNDropout_label, SSCL_CNNDropout = setHyperPrams(
-    window, "SSCL_CNNDropout", x, y+(30*3))
-SSCL_LSTMDropout_label, SSCL_LSTMDropout = setHyperPrams(
-    window, "SSCL_LSTMDropout", x, y+(30*4))
-SSCL_LSTMLayers_label, SSCL_LSTMLayers = setHyperPrams(
-    window, "SSCL_LSTMLayers", x, y+(30*5))
-SSCL_embedingDim_label, SSCL_embedingDim = setHyperPrams(
-    window, "SSCL_embedingDim", x, y+(30*6))
+SSCL_CNNDim_label, SSCL_CNNDim = setModelHyperPrams(
+    window, "SSCL_CNNDim", x, y+(60*1))
+SSCL_CNNKernel_label, SSCL_CNNKernel = setModelHyperPrams(
+    window, "SSCL_CNNKernel", x, y+(60*2))
+SSCL_CNNDropout_label, SSCL_CNNDropout = setModelHyperPrams(
+    window, "SSCL_CNNDropout", x, y+(60*3))
+SSCL_LSTMDropout_label, SSCL_LSTMDropout = setModelHyperPrams(
+    window, "SSCL_LSTMDropout", x, y+(60*4))
+SSCL_LSTMLayers_label, SSCL_LSTMLayers = setModelHyperPrams(
+    window, "SSCL_LSTMLayers", x, y+(60*5))
+SSCL_embedingDim_label, SSCL_embedingDim = setModelHyperPrams(
+    window, "SSCL_embedingDim", x, y+(60*6))
 
-SelfAttn_LenMaxSeq_label, SelfAttn_LenMaxSeq = setHyperPrams(
+SelfAttn_LenMaxSeq_label, SelfAttn_LenMaxSeq = setModelHyperPrams(
     window, "SelfAttn_LenMaxSeq", x, y)
-SelfAttn_ModelDim_label, SelfAttn_ModelDim = setHyperPrams(
-    window, "SelfAttn_ModelDim", x, y+(30*1))
-SelfAttn_FFInnerDim_label, SelfAttn_FFInnerDim = setHyperPrams(
-    window, "SelfAttn_FFInnerDim", x, y+(30*2))
-SelfAttn_NumLayers_label, SelfAttn_NumLayers = setHyperPrams(
-    window, "SelfAttn_NumLayers", x, y+(30*3))
-SelfAttn_NumHead_label, SelfAttn_NumHead = setHyperPrams(
-    window, "SelfAttn_NumHead", x, y+(30*4))
-SelfAttn_KDim_label, SelfAttn_KDim = setHyperPrams(
-    window, "SelfAttn_KDim", x, y+(30*5))
-SelfAttn_VDim_label, SelfAttn_VDim = setHyperPrams(
-    window, "SelfAttn_VDim", x, y+(30*6))
-SelfAttn_Dropout_label, SelfAttn_Dropout = setHyperPrams(
-    window, "SelfAttn_Dropout", x, y+(30*7))
+SelfAttn_ModelDim_label, SelfAttn_ModelDim = setModelHyperPrams(
+    window, "SelfAttn_ModelDim", x, y+(60*1))
+SelfAttn_FFInnerDim_label, SelfAttn_FFInnerDim = setModelHyperPrams(
+    window, "SelfAttn_FFInnerDim", x, y+(60*2))
+SelfAttn_NumLayers_label, SelfAttn_NumLayers = setModelHyperPrams(
+    window, "SelfAttn_NumLayers", x, y+(60*3))
+SelfAttn_NumHead_label, SelfAttn_NumHead = setModelHyperPrams(
+    window, "SelfAttn_NumHead", x, y+(60*4))
+SelfAttn_KDim_label, SelfAttn_KDim = setModelHyperPrams(
+    window, "SelfAttn_KDim", x, y+(60*5))
+SelfAttn_VDim_label, SelfAttn_VDim = setModelHyperPrams(
+    window, "SelfAttn_VDim", x, y+(60*6))
+SelfAttn_Dropout_label, SelfAttn_Dropout = setModelHyperPrams(
+    window, "SelfAttn_Dropout", x, y+(60*7))
 
 GatedCNN_label = [
     GatedCNN_embedingDim_label,
@@ -309,9 +324,10 @@ forgetLabelAndEntry(GatedCNN_label, GatedCNN_entry)
 
 def placeLabelAndEntry(labels, entries, x, y):
     for l, e in zip(labels, entries):
-        y = y + 30
         l.place(x=x, y=y, anchor='nw')
-        e.place(x=(x+250), y=y, anchor="nw")
+        e.place(x=x, y=(y+30), anchor="nw")
+        y = y + 60
+        
 
 
 def printHyperParamsSetting(window, model, x, y):
@@ -343,8 +359,8 @@ def printHyperParamsSetting(window, model, x, y):
         raise ValueError
 
 
-x = 770
-y = 30
+x = 530
+y = 10
 
 vocab_size_label, vocab_size = setHyperPrams(window, "vocab_size", x, y)
 validation_portion_label, validation_portion = setHyperPrams(
@@ -377,9 +393,15 @@ setBoolHyerParams(window, usingWeightRandomSampling,
                   "usingWeightRandomSampling", x, (y+(30*14)))
 
 
-resultTextbox = tk.Text(window, height = 25, width = 90)
-resultTextbox.place(x=40, y=500, anchor='nw')
+resultTextbox = tk.Text(window , width = 90)
+# resultTextbox.place(x=40, y=500, anchor='nw')
 
+resultTextbox_scrollbar = tk.Scrollbar(window, orient="vertical", command=resultTextbox.yview)
+
+resultTextbox.configure(yscrollcommand=resultTextbox_scrollbar.set)
+
+resultTextbox_scrollbar.pack(side="right", fill="y")
+resultTextbox.pack(side="right", fill="y")
 
 vocab_size.insert("end", args.vocab_size)
 validation_portion.insert("end", args.validation_portion)
@@ -422,25 +444,13 @@ SelfAttn_Dropout.insert("end", args.SelfAttn_Dropout)
 
 
 def StartTraining():
-    
-
-#     f_default1 = plt.Figure(figsize=(8,6))
-#     f_default2 = plt.Figure(figsize=(8,6))
-#     training_Canvas = FigureCanvasTkAgg(f_default2, window)
-#     trainingAndVal_Canvas = FigureCanvasTkAgg(f_default1, window)
-#     training_Canvas.get_tk_widget().place(x=1300, y = 20 , anchor="nw")
-#     trainingAndVal_Canvas.get_tk_widget().place(x=1300, y = 500, anchor="nw")  
 
     training_Canvas = tk.Label(window)
     trainingAndVal_Canvas = tk.Label(window)
     
     resultTextbox.insert("end", "Training Start\n")
     
-    resultTextbox_scrollbar = tk.Scrollbar(window, orient="vertical", command=resultTextbox.yview)
-
-    resultTextbox.configure(yscrollcommand=resultTextbox_scrollbar.set)
-
-    resultTextbox_scrollbar.pack(side="right", fill="y")
+    
     
     window.update_idletasks()
     
@@ -521,6 +531,7 @@ def StartTraining():
 
     resultTextbox.insert("end", ("Number of Spammer: " +str(args.numberOfSpammer.item()) +"\n" ))
     resultTextbox.insert("end", ("Number of NonSpammer: " + str(args.numberOfNonSpammer.item()) +"\n" ))
+    
     window.update_idletasks()
     
     if args.usingWeightRandomSampling:
@@ -597,13 +608,13 @@ def StartTraining():
     
                 trainer.plot_train_hist(args.model_name)
     
-                TrainImg = ImageTk.PhotoImage(Image.open(args.log_path+"Train_Loss&Acc_Hist_"+ str(args.model_name) +".png"))
+                TrainImg = ImageTk.PhotoImage(Image.open(args.log_path+"Train_Loss&Acc_Hist_"+ str(args.model_name) +".png").resize((500, 600), Image.ANTIALIAS))
                 
                 training_Canvas.config(image=TrainImg)
                 
                 training_Canvas.image = TrainImg
                 
-                training_Canvas.place(x=1300, y=20, anchor="nw")
+                training_Canvas.place(x=0, y=450, anchor="nw")
         
                 window.update_idletasks()
 
@@ -649,13 +660,13 @@ def StartTraining():
             
                 trainer.plot_all(args.model_name)
                 
-                TrainAndValImg = ImageTk.PhotoImage(Image.open(args.log_path + "All_Hist_" + str(args.model_name) + ".png"))
+                TrainAndValImg = ImageTk.PhotoImage(Image.open(args.log_path + "All_Hist_" + str(args.model_name) + ".png").resize((500, 600), Image.ANTIALIAS))
                 
                 trainingAndVal_Canvas.config(image=TrainAndValImg)
                 
                 trainingAndVal_Canvas.image = TrainAndValImg
                 
-                trainingAndVal_Canvas.place(x=1300, y=500, anchor="nw")
+                trainingAndVal_Canvas.place(x= 500, y=450, anchor="nw")
                 
                 window.update_idletasks()
 
@@ -689,7 +700,7 @@ StartButton = tk.Button(window,
                         text='Strat Training',
                         width=15, height=2,
                         command=StartTraining)
-StartButton.place(x=1000, y=500, anchor="nw")
+StartButton.place(x=10, y=330, anchor="nw")
 
 
 window.mainloop()
