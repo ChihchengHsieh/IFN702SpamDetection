@@ -37,9 +37,9 @@ def loadingData(args):
             print("Data Splitation")
 
             X_train, X_test, Y_train, Y_test = train_test_split(
-                df['text'], df['maliciousMark'], test_size=args.validation_portion, stratify=df['maliciousMark'], random_state=64)
+                df['text'], df['maliciousMark'], test_size=args.validation_portion, stratify=df['maliciousMark'], random_state=args.random_seed)
             X_validation, X_test, Y_validation, Y_test = train_test_split(
-                X_test, Y_test, test_size=args.test_portion, stratify=Y_test, random_state=64)
+                X_test, Y_test, test_size=args.test_portion, stratify=Y_test, random_state=args.random_seed)
 
             print("Number of Training Data: ", len(X_train))
             print("Number of Validation Data: ", len(X_validation))
@@ -155,9 +155,9 @@ def TkloadingData(args, resultTextbox, window):
             resultTextbox.insert("end", ("Data Splitation\n"))
             window.update_idletasks()
             X_train, X_test, Y_train, Y_test = train_test_split(
-                df['text'], df['maliciousMark'], test_size=args.validation_portion, stratify=df['maliciousMark'], random_state=64)
+                df['text'], df['maliciousMark'], test_size=args.validation_portion, stratify=df['maliciousMark'], random_state=args.random_seed)
             X_validation, X_test, Y_validation, Y_test = train_test_split(
-                X_test, Y_test, test_size=args.test_portion, stratify=Y_test, random_state=64)
+                X_test, Y_test, test_size=args.test_portion, stratify=Y_test, random_state=args.random_seed)
 
             resultTextbox.insert(
                 "end", ("Number of Training Data: " + str(len(X_train)) + "\n"))

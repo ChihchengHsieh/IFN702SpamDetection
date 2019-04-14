@@ -153,14 +153,14 @@ class SelfAttnModel(nn.Module):
         super().__init__()
 
         self.encoder = Encoder(
-            n_src_vocab=args.vocab_size, len_max_seq=args.attnLenMaxSeq,
-            d_word_vec=args.attnWordVecDim, d_model=args.attnModelDim, d_inner=args.attnFFInnerDim,
-            n_layers=args.attnNumLayers, n_head=args.attnNumHead, d_k=args.attnKDim, d_v=args.attnVDim,
-            dropout=args.attnDropout)
+            n_src_vocab=args.vocab_size, len_max_seq=args.SelfAttn_LenMaxSeq,
+            d_word_vec=args.SelfAttn_WordVecDim, d_model=args.SelfAttn_ModelDim, d_inner=args.SelfAttn_FFInnerDim,
+            n_layers=args.SelfAttn_NumLayers, n_head=args.SelfAttn_NumHead, d_k=args.SelfAttn_KDim, d_v=args.SelfAttn_VDim,
+            dropout=args.SelfAttn_Dropout)
 
-        self.fc = nn.Linear(args.attnModelDim, 1)
+        self.fc = nn.Linear(args.SelfAttn_ModelDim, 1)
 
-        assert args.attnModelDim == args.attnWordVecDim, \
+        assert args.SelfAttn_ModelDim == args.SelfAttn_WordVecDim, \
             'To facilitate the residual connections, \
          the dimensions of all module outputs shall be the same.'
 

@@ -271,7 +271,7 @@ class TkTrainer(nn.Module):
 
     def plot_train_hist(self, step):
 
-        fig = plt.figure(figsize=(8, 6))
+        fig = plt.figure(figsize=(20, 10))
         num_loss = 2
         i = 0
         for name in self.hist.keys():
@@ -284,13 +284,15 @@ class TkTrainer(nn.Module):
                 plt.title(name, fontsize=8, fontweight="bold")
                 plt.legend(loc='upper left')
         plt.tight_layout()
+        plt.show()
+        
         fig.savefig(self.log_path+"Train_Loss&Acc_Hist_"+str(step)+".png")
 
         return fig
 
     def plot_all(self, step=None):
 
-        fig = plt.figure(figsize=(8, 6))
+        fig = plt.figure(figsize=(20, 10))
         for name in self.hist.keys():
             if "Average" in name:
                 if 'Loss' in name:
@@ -308,6 +310,7 @@ class TkTrainer(nn.Module):
                     plt.title('Accuracy', fontsize=8, fontweight="bold")
                     plt.legend(loc='upper left')
         plt.tight_layout()
+        plt.show()
 
         if step is not None:
             fig.savefig(self.log_path + "All_Hist_"+str(step)+".png")
