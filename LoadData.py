@@ -2,11 +2,168 @@
 import os
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from utils import preprocessingInputData, matchingURL, mapFromWordToIdx, CreateDatatset
+from utils import preprocessingInputData, matchingURL, mapFromWordToIdx, CreateDatatset, CreateTweetsWithUserInfoDatatset
 import itertools
 import pickle
 from Constants import specialTokenList
 import nltk
+from collections import defaultdict
+from nltk.tokenize import TweetTokenizer
+import re
+
+
+
+
+
+def loadingTweetsAndUserInfoData(args):
+
+    if not os.path.isfile(os.path.join(args.dataset, args.pickle_name)):
+
+        if not os.path.isfile(os.path.join(args.dataset, args.pickle_name_beforeMapToIdx)):
+
+            print("Loading ",  os.path.join(
+                args.dataset, "FullTweetsWithUserInfoSelected.html"), " to do the Proprocessing")
+
+            df = pd.read_html(os.path.join(
+                args.dataset, "FullTweetsWithUserInfoSelected.html"))
+
+            columnNames = list(df[0].loc[0])
+            df = df[0].iloc[1:, :]
+            df.columns = columnNames
+
+            def preprocessingInputTextData(colName):
+                input = df[colName]
+                ps = nltk.stem.PorterStemmer()
+                tknzr = TweetTokenizer()
+                allText = [i for i in input]
+                preprocessedText = [[ps.stem(word) for word in tknzr.tokenize(re.sub(r'\d+', '', re.sub(r"http\S+|www.\S+", matchingURL,
+                                                                                                        sentence)).lower()) if word not in nltk.corpus.stopwords.words('english') and len(word) >= 3] for sentence in allText]
+                df[colName] = preprocessedText
+
+            def fillingNullValue(colName):
+                if args.preprocessingStra[colName]['fillingNullMethod'] == filling_method.MOST_COMMON:
+                    df[colName] = df[colName].astype('float')
+                    df[colName].fillna(df[colName].mean(), inplace=True)
+                elif args.preprocessingStra[colName]['fillingNullMethod'] == filling_method.MEAN:
+                    df[colName] = df[colName].astype('category')
+                    df[colName].fillna(df[colName].astype(
+                        'category').describe()['top'], inplace=True)
+                elif args.preprocessingStra[colName]['fillingNullMethod'] == filling_method.CERTAIN_VALUE:
+                    df[colName] = df[colName].astype('category')
+                    df[colName] = df[colName].cat.add_categories(
+                        [args.preprocessingStra[colName]['fillingNullValue']])
+                    df[colName].fillna(args.preprocessingStra[colName]
+                                       ['fillingNullValue'], inplace=True)
+
+            def TweetsWithUserInfoPreprocessing():
+                for colName in args.preprocessingStra.keys():
+                    print("Preprocessing column: ", colName)
+                    for step in args.preprocessingStra[colName]['steps']:
+                        if not step is None:
+                            step(colName)
+            ############### Hiding Preprocessing Strategy ###############
+
+            args.preprocessingStra = defaultdict(dict)
+            args.preprocessingStra['text']['steps'] = [
+                preprocessingInputTextData]
+            args.preprocessingStra["numberOfHashtags_c"]['steps'] = [None]
+            args.preprocessingStra['favorite_count']['steps'] = [None]
+            args.preprocessingStra['retweet_count']['steps'] = [None]
+            args.preprocessingStra['possibly_sensitive'] = {
+                'fillingNullMethod': filling_method.CERTAIN_VALUE,
+                'fillingNullValue': 'UNKNOWN',
+                'steps': [fillingNullValue],
+            }
+            args.preprocessingStra['followers_count']['steps'] = [None]
+            args.preprocessingStra['friends_count']['steps'] = [None]
+            # args.preprocessingStra['description']= {
+            #    'steps': [ fillingNullValue,preprocessingInputTextData],
+            #     'fillingNullMethod': filling_method.CERTAIN_VALUE,
+            #     'fillingNullValue': 'NULLDescription'
+            # }
+            args.preprocessingStra['default_profile']['steps'] = [None]
+            args.preprocessingStra['default_profile_image']['steps'] = [None]
+            args.preprocessingStra['favourites_count']['steps'] = [None]
+            args.preprocessingStra['listed_count']['steps'] = [None]
+            args.preprocessingStra['statuses_count']['steps'] = [None]
+            args.preprocessingStra['verified']['steps'] = [None]
+
+            print('Preprocessing Strategy Set')
+
+            #############################################################
+
+            print('Start Preprocessing...')
+            TweetsWithUserInfoPreprocessing()  # Apply inplace preprocessing
+            df = pd.get_dummies(df, drop_first=True, columns=[
+                                'possibly_sensitive', 'default_profile', 'default_profile_image', 'verified'])
+
+            print('Spliting Datasets...')
+            X_train, X_test, Y_train, Y_test = train_test_split(df.drop(
+                'maliciousMark', axis=1), df['maliciousMark'], test_size=args.validation_portion, stratify=df['maliciousMark'],  random_state=args.random_seed)
+            X_validation, X_test, Y_validation, Y_test = train_test_split(
+                X_test, Y_test, test_size=args.test_portion, stratify=Y_test, random_state=args.random_seed)
+
+            print('Creating Tweets_text')
+            tweets_text = nltk.Text(list(itertools.chain(*X_train['text'])))
+
+            with open(os.path.join(args.dataset, args.pickle_name_beforeMapToIdx), "wb") as fp:  # Pickling
+                pickle.dump([X_train, X_validation, X_test,
+                             Y_train, Y_validation, Y_test,  tweets_text], fp)
+                print("The Pickle Data beforeMapToIdx Dumped to:", os.path.join(
+                    args.dataset, args.pickle_name_beforeMapToIdx))
+
+        else:
+            print("Loading Existing BeforeMapToIdx file for Tweets and User: ",
+                  os.path.join(args.dataset, args.pickle_name_beforeMapToIdx))
+            with open(os.path.join(args.dataset, args.pickle_name_beforeMapToIdx), "rb") as fp:   # Unpickling
+                [X_train, X_validation, X_test,
+                 Y_train, Y_validation, Y_test,  tweets_text] = pickle.load(fp)
+
+        args.vocab_size = args.vocab_size or len(tweets_text.tokens)
+        if args.vocab_size:  # and this if expression
+            tweets_text.tokens = specialTokenList + \
+                [w for w, _ in tweets_text.vocab().most_common(
+                    args.vocab_size - len(specialTokenList))]
+        else:
+            tweets_text.tokens = specialTokenList + tweets_text.tokens
+        args.vocab_size = len(tweets_text.tokens)  # change the vacab_size
+        
+
+        print("Maping Word To Idx: training set")
+        X_train['text'] = mapFromWordToIdx(X_train['text'], tweets_text)
+        print("Maping Word To Idx: validation set")
+        X_validation['text'] = mapFromWordToIdx(
+            X_validation['text'], tweets_text)
+        print("Maping Word To Idx: test set")
+        X_test['text'] = mapFromWordToIdx(X_test['text'], tweets_text)
+
+
+        print("Creating Torch Datasets...")
+        training_dataset = CreateTweetsWithUserInfoDatatset(
+            X_train, list(map(int, list(Y_train))))
+        validation_dataset = CreateTweetsWithUserInfoDatatset(
+            X_validation, list(map(int, list(Y_validation))))
+        test_dataset = CreateTweetsWithUserInfoDatatset(
+            X_test, list(map(int, list(Y_test))))
+
+        print("Dumping Data")
+
+        with open(os.path.join(args.dataset, args.pickle_name), "wb") as fp:   # Pickling
+            pickle.dump([training_dataset, validation_dataset,
+                         test_dataset, tweets_text], fp)
+            print("The Pickle Data Dumped to: ", os.path.join(args.dataset, args.pickle_name))
+
+    else:
+        print("Loading Existing File: ", os.path.join(args.dataset, args.pickle_name))
+        with open(os.path.join(args.dataset, args.pickle_name), "rb") as fp:   # Unpickling
+            training_dataset, validation_dataset, test_dataset, tweets_text = pickle.load(
+                fp)
+
+    args.vocab_size = len(tweets_text.tokens)
+    args.num_extra_info = len(training_dataset[0][1])
+    args.num_features = len(training_dataset[0][1]) + 1
+
+    return training_dataset, validation_dataset, test_dataset, tweets_text
 
 
 def loadingData(args):

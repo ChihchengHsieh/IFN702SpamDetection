@@ -14,6 +14,40 @@ import numpy as np
 # word2vector = torch.FloatTensor(model.vectors)
 
 
+
+class MultiTaskModel(nn.Module):
+    
+    def __init__(self, textModel, args):
+        super(MultiTaskModel, self).__init__()
+        
+        self.textModel = textModel(args)
+        
+        self.infoModel = nn.Sequential(
+            nn.Linear(args.num_features, args.FC_hidden),
+            nn.BatchNorm1d(args.FC_hidden),
+            nn.LeakyReLU(0.2, inplace = True),
+            nn.Linear(args.FC_hidden, args.FC_hidden),
+            nn.BatchNorm1d(args.FC_hidden),
+            nn.LeakyReLU(0.2, inplace = True),
+            nn.Linear(args.FC_hidden, args.FC_hidden),
+            nn.BatchNorm1d(args.FC_hidden),
+            nn.LeakyReLU(0.2, inplace = True),
+            nn.Linear(args.FC_hidden, 1),
+        )
+        
+        
+    def forward(self, input, length):
+        
+        text_input, extra_info = input
+        
+        text_out = self.textModel(text_input, length)
+        
+        return self.infoModel(torch.cat((text_out, extra_info), dim = 1))
+        
+        
+        
+
+
 class SSCL(nn.Module):
 
     ''' The Model from paper '''
